@@ -25,7 +25,7 @@ namespace OGL
 		glBindVertexArray(0);
 	}
 
-	void VertexArrayBuffer::SetVertexBuffer(Ref<VertexBuffer>& vb)
+	void VertexArrayBuffer::SetVertexBuffer(Ref<VertexBuffer>& vb, bool instanced)
 	{
 		auto TypeCast = [](OpenGLDataType type)->GLenum {
 			switch (type)
@@ -44,17 +44,24 @@ namespace OGL
 		};
 
 		Bind();
-		m_VertexBuffer = vb;
-		m_VertexBuffer->Bind();
-		auto& layout = m_VertexBuffer->GetLayout();
+		int offset = 0;
+		for (auto vbo : m_VertexBuffers) offset += vbo->GetLayout().GetElements().size();
+		m_VertexBuffers.push_back(vb);
+		vb->Bind();
+		auto& layout = vb->GetLayout();
 		auto& LayoutElements = layout.GetElements();
 		uint32_t totalSize = layout.GetTotalSize();
+		
 		for (int i = 0; i < LayoutElements.size(); i++)
 		{
 			const LayoutElement& e = LayoutElements[i];
-			glVertexAttribPointer(i, e.Count, TypeCast(e.Type), (e.Normalized == true) ? GL_TRUE : GL_FALSE, totalSize, (void*)e.offset);
-			glEnableVertexAttribArray(i);
+			glVertexAttribPointer(i+offset, e.Count, TypeCast(e.Type), (e.Normalized == true) ? GL_TRUE : GL_FALSE, totalSize, (void*)e.offset);
+			glEnableVertexAttribArray(i + offset);
+			
+			if (instanced) glVertexAttribDivisor(i + offset, e.Divisor_);
 		}
+
+		
 		UnBind();
 	}
 

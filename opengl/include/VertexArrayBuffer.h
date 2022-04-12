@@ -13,14 +13,14 @@ namespace OGL
 		void Bind() const;
 		void UnBind() const;
 
-		void SetVertexBuffer(Ref<VertexBuffer>& vb);
+		void SetVertexBuffer(Ref<VertexBuffer>& vb,bool instanced=false);
 		void SetIndexBuffer(Ref<IndexBuffer>& ib);
 
 		const Ref<IndexBuffer>& GetIndexBuffer()const { return m_IndexBuffer; }
 		static Ref<VertexArrayBuffer> Create();
 	private:
 		uint32_t m_RendererId;
-		Ref<VertexBuffer> m_VertexBuffer;
+		std::vector<Ref<VertexBuffer>> m_VertexBuffers;
 		Ref<IndexBuffer> m_IndexBuffer;
 	};
 }

@@ -28,13 +28,11 @@ namespace OGL
 		std::string Name;
 		OpenGLDataType Type;
 		uint32_t Count;
+		int Divisor_;
 		bool Normalized;
-		
 		uint32_t offset;
-		LayoutElement(const std::string& name, OpenGLDataType type, uint32_t count, bool normalized = false)
-			:Name(name),Type(type),Count(count),Normalized(normalized){}
-
-		
+		LayoutElement(const std::string& name, OpenGLDataType type, uint32_t count, int divisor=0, bool normalized = false)
+			:Name(name), Type(type), Count(count), Divisor_(divisor), Normalized(normalized) {}
 	};
 
 	class BufferLayout

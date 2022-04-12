@@ -23,6 +23,10 @@ namespace OGL
 		void SetFloat3(const std::string& name, const glm::vec3& value);
 		void SetInt1(const std::string& name, int value);
 		void SetIntArray(const std::string& name, int* values, unsigned int count);
+
+		//only for debug;
+		void Reset(const std::string& filename);
+		bool Compile(const std::string& filename);
 	private:
 		std::pair<std::string, std::string> ReadFile(const std::string& filePath);
 		

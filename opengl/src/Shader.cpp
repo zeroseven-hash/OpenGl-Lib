@@ -16,6 +16,7 @@ namespace OGL
 		uint32_t vertexShaderId = compileShader(vertexSouce, 0);
 		uint32_t fragmentShaderId = compileShader(fragmentSouce, 1);
 
+		if (vertexShaderId == -1 || fragmentShaderId == -1) assert(false);
 		m_ProgramId = glCreateProgram();
 		glAttachShader(m_ProgramId, vertexShaderId);
 		glAttachShader(m_ProgramId, fragmentShaderId);
@@ -113,7 +114,7 @@ namespace OGL
 				type = 1;
 				continue;
 			}
-
+			if (type == -1) return{ shaderSource[0].str(),shaderSource[1].str() };
 			shaderSource[type] << s << std::endl;
 
 		}
@@ -134,8 +135,47 @@ namespace OGL
 		{
 			glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
 			std::cout << infoLog << std::endl;
-			assert(false);
+			glDeleteShader(shaderId);
+			return -1;
 		}
 		return shaderId;
+	}
+
+	void Shader::Reset(const std::string& filename)
+	{
+		std::pair<std::string, std::string> sources = ReadFile(filename);
+		auto& vertexSouce = sources.first;
+		auto& fragmentSouce = sources.second;
+		uint32_t vertexShaderId = compileShader(vertexSouce, 0);
+		uint32_t fragmentShaderId = compileShader(fragmentSouce, 1);
+
+		if (vertexShaderId == -1 || fragmentShaderId == -1)
+		{
+			return;
+		}
+		else
+		{
+			if (m_ProgramId >= 0) glDeleteProgram(m_ProgramId);
+		}
+		m_ProgramId = glCreateProgram();
+		glAttachShader(m_ProgramId, vertexShaderId);
+		glAttachShader(m_ProgramId, fragmentShaderId);
+
+		glLinkProgram(m_ProgramId);
+		glDeleteShader(vertexShaderId);
+		glDeleteShader(fragmentShaderId);
+	}
+
+	bool Shader::Compile(const std::string& filename)
+	{
+		std::pair<std::string, std::string> sources = ReadFile(filename);
+		auto& vertexSouce = sources.first;
+		auto& fragmentSouce = sources.second;
+		uint32_t vertexShaderId = compileShader(vertexSouce, 0);
+		uint32_t fragmentShaderId = compileShader(fragmentSouce, 1);
+
+		if (vertexShaderId == -1 || fragmentShaderId == -1)
+			return false;
+		return true;
 	}
 }

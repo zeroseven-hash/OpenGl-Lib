@@ -1,4 +1,3 @@
-#define GLFW_INCLUDE_NONE
 #include<glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -17,7 +16,7 @@ int main(void)
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-   
+
     if (!window)
     {
         glfwTerminate();
@@ -29,65 +28,71 @@ int main(void)
     {
         return 0;
     }
-    
+
     struct V
     {
-        
+
         glm::vec4 pos_;
         glm::vec4 color_;
-        glm::vec2 coords;
     };
 
     std::vector<V> vertices = {
-        { glm::vec4{ -0.5, 0.5, -1.5, 1}, glm::vec4{0, 1, 0, 1},glm::vec2{0,1} },
-        { glm::vec4{ -0.5, -0.5, -1.5, 1}, glm::vec4{0, 0, 1, 1},glm::vec2{0,0}},
-        { glm::vec4{  0.5,  0.5, -1.5, 1}, glm::vec4{1, 0, 0, 1},glm::vec2{1,1} },
-        { glm::vec4{0.5,-0.5,-1.5,1},glm::vec4{0.5,0.5,0.5,1},glm::vec2{1,0}}
+        { glm::vec4{ -0.25, 0.25, 0.0f, 1}, glm::vec4{0, 1, 0, 1}},
+        { glm::vec4{ -0.25, -0.25, 0.0f, 1}, glm::vec4{0, 0, 1, 1}},
+        { glm::vec4{  0.25,  0.25, 0.0f, 1}, glm::vec4{1, 0, 0, 1}},
+        { glm::vec4{0.25,-0.25,0.0f,1},glm::vec4{0.5,0.5,0.5,1}}
     };
+    
     OGL::Ref < OGL::VertexBuffer> vbo = OGL::VertexBuffer::Create(vertices.data(), sizeof(V) * vertices.size());
     OGL::BufferLayout layout =
     {
         {"a_Position",OGL::OpenGLDataType::Float,4},
         {"a_Color",OGL::OpenGLDataType::Float,4},
-        {"a_Coords",OGL::OpenGLDataType::Float,2},
     };
+
+    std::vector<glm::mat4> models;
+    auto m1 = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, 0.5f, 0.0f));
+    auto m2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.0f));
+    models.push_back(m1);
+    models.push_back(m2);
+    OGL::Ref<OGL::VertexBuffer> instanced_buffer = OGL::VertexBuffer::Create(models.data(), sizeof(glm::mat4) * 2);
+    OGL::BufferLayout i_layout =
+    {
+        {"a_row1",OGL::OpenGLDataType::Float,4,1},
+        {"a_row2",OGL::OpenGLDataType::Float,4,1},
+        {"a_row3",OGL::OpenGLDataType::Float,4,1},
+        {"a_row4",OGL::OpenGLDataType::Float,4,1},
+    };
+    instanced_buffer->SetLayout(i_layout);
+
+
     vbo->SetLayout(layout);
     std::vector<uint32_t> indices = { 0,1,2,1,3,2 };
     OGL::Ref<OGL::IndexBuffer>ibo = OGL::IndexBuffer::Create(indices.data(), 6);
-    
+
     OGL::Ref<OGL::VertexArrayBuffer> vao = OGL::VertexArrayBuffer::Create();
     vao->SetVertexBuffer(vbo);
+    vao->SetVertexBuffer(instanced_buffer, true);
     vao->SetIndexBuffer(ibo);
-    OGL::Ref<OGL::Texture> texture = OGL::Texture::Create("L:/dev/OpenGL-Lib/Texture.bmp");
+    OGL::Ref<OGL::Shader> shader = OGL::Shader::Create("../../example/instanced/instanced.glsl");
+
+   
+
     
-    OGL::Ref<OGL::Shader> shader = OGL::Shader::Create("L:/dev/OpenGL-Lib/meshshader_line.glsl");
-    shader->Bind();
-    shader->SetInt1("tex", 0);
     
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 perpective = glm::perspective(glm::radians(60.0f), 640 / 480.0f, 1.0f, 500.0f);
-    //glm::mat4 view=glm::lookAt(glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f,0.0f));
-    
-    shader->SetMat4("pers", perpective);
     //shader->SetMat4("view", view);
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        texture->Bind();
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        float radius = 1.0f;
-        float camX = sin(glfwGetTime()) * radius;
-        float camZ = cos(glfwGetTime()) * radius;
-        glm::mat4 view;
-        view = glm::lookAt(glm::vec3(0.0f, -0.3, 0.0f), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, -1.0));
+        //OGL::Renderer::Draw(*shader, vao, glm::mat4(1.0f));
         shader->Bind();
-        shader->SetMat4("view", view);
+        vao->Bind();
+        glDrawElementsInstanced(GL_TRIANGLES, vao->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr, 2);
 
-        OGL::Renderer::Draw(*shader, vao, glm::mat4(1.0f));
-        /* Swap front and back buffers */
+        ///* Swap front and back buffers */
         glfwSwapBuffers(window);
 
         /* Poll for and process events */
